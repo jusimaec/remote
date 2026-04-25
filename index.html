@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>時空術 Magician 원격지원</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Cinzel:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d26;
+      --accent: #3d7eff;
+      --accent-mobile: #10b981;
+      --text-main: #ffffff;
+      --text-dim: #94a3b8;
+      --guide-bg: rgba(46, 125, 50, 0.1);
+      --warning-bg: #fff3cd;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: 'Noto Sans KR', sans-serif;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 40px 0;
+    }
+
+    .card {
+      width: 90%;
+      max-width: 480px;
+      padding: 40px 30px;
+      background: var(--surface);
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 26px;
+      margin: 0;
+      letter-spacing: 1px;
+    }
+
+    .sub-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 5px 0 25px;
+      color: var(--accent);
+    }
+
+    #action-area {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .btn-download {
+      display: block;
+      width: 100%;
+      padding: 16px 0;
+      background: var(--accent);
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-mobile { background: var(--accent-mobile); }
+
+    .btn-download:hover:not(.btn-disabled) {
+      filter: brightness(1.1);
+      transform: translateY(-2px);
+    }
+
+    .btn-disabled {
+      background: #2d313d;
+      color: #555;
+      cursor: not-allowed;
+    }
+
+    .file-name {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 6px;
+      opacity: 0.6;
+    }
+
+    .guide {
+      margin-top: 10px;
+      background: var(--guide-bg);
+      border-radius: 12px;
+      padding: 25px;
+      font-size: 1.1rem;
+      color: #a5d6a7;
+      line-height: 1.8;
+      text-align: left;
+    }
+
+    .warning-box {
+      margin-top: 15px;
+      background: var(--warning-bg);
+      color: #b71c1c;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #ff9800;
+      font-size: 0.9rem;
+    }
+
+    .warning-title {
+      color: #d32f2f;
+      font-size: 0.92rem;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .warning-img {
+      max-width: 100%;
+      border-radius: 6px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .qr-section {
+      margin-top: 30px;
+      padding-top: 25px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .qr-section p {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-bottom: 15px;
+    }
+
+    .qr-section img {
+      width: 140px;
+      height: 140px;
+      background: white;
+      padding: 5px;
+      border-radius: 8px;
+    }
+
+    .highlight-footer {
+      margin-top: 40px;
+      padding: 20px 0 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      width: 100%;
+    }
+
+    /* 요청하신 하단 문구 크기 조정 */
+    .footer-text {
+      font-size: 16px; /* 크기를 적절하게 줄임 */
+      font-weight: 700;
+      color: #3d7eff;
+      letter-spacing: 1.5px;
+      opacity: 0.9;
+    }
+
+    .loader {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top: 3px solid var(--accent);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>時空術 Magician</h1>
+    <div class="sub-title">원격지원 (RustDesk)</div>
+
+    <div id="action-area">
+      <div class="loader"></div>
+      <p style="font-size:14px; color:var(--text-dim);">Dropbox 연결 중...</p>
+    </div>
+
+    <div class="guide">
+      <b style="font-size: 1.25rem; color: #ffffff;">✅ 사용 방법 안내</b><br>
+      1. 기기에 맞는 프로그램을 다운로드 및 실행<br>
+      2. <b style="color: #ffeb3b; text-decoration: underline;">화면 왼쪽 위에 나타난 숫자(ID)</b>를 알려주세요.
+      
+      <div class="warning-box">
+        <span class="warning-title">⚠️ 다운로드가 자동으로 시작되지 않거나 차단될 경우:</span>
+        1. 키보드에서 <b>Ctrl + J</b>를 눌러 [다운로드 목록]을 엽니다.<br>
+        2. 목록에서 해당 파일을 찾아 <b>[계속]</b> 또는 <b>[위험 수용]</b>을 선택한 뒤,<br>
+        3. 파일을 직접 <b>PC의 바탕화면</b>에 저장하여 실행해 주세요.<br><br>
+        
+        <span class="warning-title">⚠️ 실행 시 경고창이 뜨면 '추가 정보'를 누른 뒤 '실행'을 선택해 주세요.</span>
+        <img src="./smartscreen_warning.png" alt="경고 예시" class="warning-img">
+      </div>
+    </div>
+
+    <div class="qr-section">
+      <p>📱 모바일 RustDesk 서버 설정 QR코드</p>
+      <img src="./server_qr.png" alt="QR코드">
+    </div>
+
+    <footer class="highlight-footer">
+      <div class="footer-text">
+        © 도서출판 역리원
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const CONFIG = {
+      CLIENT_ID: 'kmdebnypv4oe50u',
+      CLIENT_SECRET: 'tdlnvo7uk7npcjm',
+      REFRESH_TOKEN: 'jKkdy01X72gAAAAAAAAAAcxK3ZoqyY6hwOY_x4RIrwGidFIKJ6e4n0h2Umway9L5'
+    };
+
+    let accessToken = null;
+
+    async function refreshAccessToken() {
+      try {
+        const res = await fetch('https://api.dropbox.com/oauth2/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `grant_type=refresh_token&refresh_token=${CONFIG.REFRESH_TOKEN}&client_id=${CONFIG.CLIENT_ID}&client_secret=${CONFIG.CLIENT_SECRET}`
+        });
+        const data = await res.json();
+        accessToken = data.access_token;
+      } catch (e) {
+        document.getElementById('action-area').innerHTML = '<p style="color:#ef4444;">연결 오류</p>';
+      }
+    }
+
+    async function init() {
+      try {
+        await refreshAccessToken();
+        const res = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: '' })
+        });
+        const data = await res.json();
+        
+        const pcFile = data.entries.find(e => /remote/i.test(e.name) && e.name.toLowerCase().endsWith('.exe'));
+        const mobileFile = data.entries.find(e => /remote/i.test(e.name) && (e.name.toLowerCase().endsWith('.apk') || e.name.toLowerCase().endsWith('.apkx')));
+
+        const area = document.getElementById('action-area');
+        area.innerHTML = '';
+
+        if (pcFile) {
+          addButton(area, '다운로드 (윈도우 PC)', pcFile, 'btn-pc');
+        }
+        if (mobileFile) {
+          addButton(area, '다운로드 (모바일/태블릿)', mobileFile, 'btn-mobile');
+        }
+      } catch (e) {
+        document.getElementById('action-area').innerHTML = '<p style="color:#888;">파일을 불러올 수 없습니다.</p>';
+      }
+    }
+
+    function addButton(container, label, file, cls) {
+      const div = document.createElement('div');
+      const btn = document.createElement('button');
+      btn.className = `btn-download ${cls === 'btn-mobile' ? 'btn-mobile' : ''}`;
+      btn.innerText = label;
+      btn.onclick = () => download(file, btn, label);
+      
+      const name = document.createElement('div');
+      name.className = 'file-name';
+      name.innerText = file.name;
+
+      div.appendChild(btn);
+      div.appendChild(name);
+      container.appendChild(div);
+    }
+
+async function download(file, btn, txt) {
+      btn.innerText = "준비 중..."; // "연결 중"보다 사용자에게 안정감을 줌
+      btn.classList.add('btn-disabled');
+      
+      try {
+        await refreshAccessToken();
+        
+        // 1. 드롭박스 임시 링크 생성
+        const res = await fetch('https://api.dropboxapi.com/2/files/get_temporary_link', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: file.path_lower })
+        });
+        const data = await res.json();
+        
+        // 2. [핵심] 파일을 브라우저 메모리로 직접 fetch
+        // 이 과정을 거치면 브라우저가 '신뢰할 수 있는 전송'으로 인식할 가능성이 높아집니다.
+        btn.innerText = "데이터 수신 중...";
+        const fileRes = await fetch(data.link);
+        if (!fileRes.ok) throw new Error('파일 전송 실패');
+        
+        const blob = await fileRes.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        
+        // 3. 가상 링크를 생성하여 다운로드 실행
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = blobUrl;
+        a.download = file.name; // 원본 파일명 유지
+        document.body.appendChild(a);
+        a.click();
+        
+        // 4. 메모리 정리
+        window.URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(a);
+        
+        btn.innerText = "다운로드 완료";
+      } catch (e) {
+        console.error(e);
+        alert("다운로드 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+        btn.innerText = txt;
+      } finally {
+        setTimeout(() => {
+          btn.classList.remove('btn-disabled');
+          btn.innerText = txt;
+        }, 3000);
+      }
+}
+
+    init();
+  </script>
+</body>
+</html>
