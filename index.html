@@ -223,7 +223,7 @@
   <script>
     const GITHUB_OWNER = 'jusimaec';
     const GITHUB_REPO = 'remote';
-    const REMOTE_FOLDER_PATH = 'Remote'; // Remote 폴더 경로
+    const REMOTE_FOLDER_PATH = ''; // 루트 디렉토리 (Remote 폴더 없음)
 
     async function init() {
       try {
@@ -292,12 +292,10 @@
 
     function addButton(container, label, file, cls) {
       const div = document.createElement('div');
-      const btn = document.createElement('a');
+      const btn = document.createElement('button');
       btn.className = `btn-download ${cls === 'btn-mobile' ? 'btn-mobile' : ''}`;
       btn.innerText = label;
-      btn.href = file.downloadUrl;
-      btn.download = file.name;
-      btn.target = '_blank';
+      btn.onclick = () => downloadFile(file, btn, label);
       
       const name = document.createElement('div');
       name.className = 'file-name';
@@ -306,6 +304,42 @@
       div.appendChild(btn);
       div.appendChild(name);
       container.appendChild(div);
+    }
+
+    async function downloadFile(file, btn, label) {
+      btn.innerText = "다운로드 중...";
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(file.downloadUrl);
+        if (!response.ok) throw new Error('다운로드 실패');
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = file.name;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+
+        btn.innerText = "다운로드 완료";
+      } catch (e) {
+        console.error(e);
+        btn.innerText = "다운로드 실패";
+      } finally {
+        setTimeout(() => {
+          btn.innerText = label;
+          btn.disabled = false;
+        }, 2000);
+      }
     }
 
     init();
