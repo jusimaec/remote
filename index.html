@@ -221,61 +221,93 @@
   </div>
 
   <script>
-    const CONFIG = {
-      CLIENT_ID: 'kmdebnypv4oe50u',
-      CLIENT_SECRET: 'tdlnvo7uk7npcjm',
-      REFRESH_TOKEN: 'jKkdy01X72gAAAAAAAAAAcxK3ZoqyY6hwOY_x4RIrwGidFIKJ6e4n0h2Umway9L5'
-    };
-
-    let accessToken = null;
-
-    async function refreshAccessToken() {
-      try {
-        const res = await fetch('https://api.dropbox.com/oauth2/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: `grant_type=refresh_token&refresh_token=${CONFIG.REFRESH_TOKEN}&client_id=${CONFIG.CLIENT_ID}&client_secret=${CONFIG.CLIENT_SECRET}`
-        });
-        const data = await res.json();
-        accessToken = data.access_token;
-      } catch (e) {
-        document.getElementById('action-area').innerHTML = '<p style="color:#ef4444;">연결 오류</p>';
-      }
-    }
+    const GITHUB_OWNER = 'jusimaec';
+    const GITHUB_REPO = 'remote';
+    const GITHUB_BRANCH = 'main';
 
     async function init() {
       try {
-        await refreshAccessToken();
-        const res = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path: '' })
-        });
-        const data = await res.json();
-        
-        const pcFile = data.entries.find(e => /remote/i.test(e.name) && e.name.toLowerCase().endsWith('.exe'));
-        const mobileFile = data.entries.find(e => /remote/i.test(e.name) && (e.name.toLowerCase().endsWith('.apk') || e.name.toLowerCase().endsWith('.apkx')));
+        // GitHub API로 하위 폴더 탐색
+        const response = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/`);
+        const contents = await response.json();
+
+        let pcFile = null;
+        let mobileFile = null;
+
+        // 모든 폴더와 파일 탐색
+        for (const item of contents) {
+          if (item.type === 'dir') {
+            // 하위 폴더 탐색
+            const folderResponse = await fetch(item.url);
+            const folderContents = await folderResponse.json();
+
+            for (const file of folderContents) {
+              const fileName = file.name.toLowerCase();
+              
+              // support가 들어간 exe 찾기 (윈도우용)
+              if (!pcFile && /support/i.test(file.name) && fileName.endsWith('.exe')) {
+                pcFile = {
+                  name: file.name,
+                  path: file.path,
+                  downloadUrl: file.download_url
+                };
+              }
+
+              // apk 파일 찾기 (모바일용)
+              if (!mobileFile && fileName.endsWith('.apk')) {
+                mobileFile = {
+                  name: file.name,
+                  path: file.path,
+                  downloadUrl: file.download_url
+                };
+              }
+            }
+          } else {
+            // 루트 파일도 확인
+            const fileName = item.name.toLowerCase();
+            if (!pcFile && /support/i.test(item.name) && fileName.endsWith('.exe')) {
+              pcFile = { name: item.name, path: item.path, downloadUrl: item.download_url };
+            }
+            if (!mobileFile && fileName.endsWith('.apk')) {
+              mobileFile = { name: item.name, path: item.path, downloadUrl: item.download_url };
+            }
+          }
+        }
 
         const area = document.getElementById('action-area');
         area.innerHTML = '';
 
         if (pcFile) {
           addButton(area, '다운로드 (윈도우 PC)', pcFile, 'btn-pc');
+        } else {
+          const p = document.createElement('p');
+          p.innerText = 'PC용 파일을 찾을 수 없습니다.';
+          p.style.color = '#888';
+          area.appendChild(p);
         }
+
         if (mobileFile) {
           addButton(area, '다운로드 (모바일/태블릿)', mobileFile, 'btn-mobile');
+        } else {
+          const p = document.createElement('p');
+          p.innerText = '모바일용 파일을 찾을 수 없습니다.';
+          p.style.color = '#888';
+          area.appendChild(p);
         }
       } catch (e) {
+        console.error(e);
         document.getElementById('action-area').innerHTML = '<p style="color:#888;">파일을 불러올 수 없습니다.</p>';
       }
     }
 
     function addButton(container, label, file, cls) {
       const div = document.createElement('div');
-      const btn = document.createElement('button');
+      const btn = document.createElement('a');
       btn.className = `btn-download ${cls === 'btn-mobile' ? 'btn-mobile' : ''}`;
       btn.innerText = label;
-      btn.onclick = () => download(file, btn, label);
+      btn.href = file.downloadUrl;
+      btn.download = file.name;
+      btn.target = '_blank';
       
       const name = document.createElement('div');
       name.className = 'file-name';
@@ -285,55 +317,6 @@
       div.appendChild(name);
       container.appendChild(div);
     }
-
-async function download(file, btn, txt) {
-      btn.innerText = "준비 중..."; // "연결 중"보다 사용자에게 안정감을 줌
-      btn.classList.add('btn-disabled');
-      
-      try {
-        await refreshAccessToken();
-        
-        // 1. 드롭박스 임시 링크 생성
-        const res = await fetch('https://api.dropboxapi.com/2/files/get_temporary_link', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path: file.path_lower })
-        });
-        const data = await res.json();
-        
-        // 2. [핵심] 파일을 브라우저 메모리로 직접 fetch
-        // 이 과정을 거치면 브라우저가 '신뢰할 수 있는 전송'으로 인식할 가능성이 높아집니다.
-        btn.innerText = "데이터 수신 중...";
-        const fileRes = await fetch(data.link);
-        if (!fileRes.ok) throw new Error('파일 전송 실패');
-        
-        const blob = await fileRes.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-        
-        // 3. 가상 링크를 생성하여 다운로드 실행
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = blobUrl;
-        a.download = file.name; // 원본 파일명 유지
-        document.body.appendChild(a);
-        a.click();
-        
-        // 4. 메모리 정리
-        window.URL.revokeObjectURL(blobUrl);
-        document.body.removeChild(a);
-        
-        btn.innerText = "다운로드 완료";
-      } catch (e) {
-        console.error(e);
-        alert("다운로드 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
-        btn.innerText = txt;
-      } finally {
-        setTimeout(() => {
-          btn.classList.remove('btn-disabled');
-          btn.innerText = txt;
-        }, 3000);
-      }
-}
 
     init();
   </script>
