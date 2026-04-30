@@ -132,7 +132,6 @@
       border: 1px solid #ccc;
     }
 
-    /* Edge 경고 단계 스타일 */
     .edge-steps {
       margin-top: 12px;
       display: flex;
@@ -221,7 +220,7 @@
 
     <div id="action-area">
       <div class="loader"></div>
-      <p style="font-size:14px; color:var(--text-dim);">파일 목록 불러오는 중...</p>
+      <p style="font-size:14px; color:var(--text-dim);">최신 릴리즈 불러오는 중...</p>
     </div>
 
     <div class="guide">
@@ -237,7 +236,6 @@
         <span class="warning-title">⚠️ Edge 브라우저에서 다운로드가 차단될 경우 아래 순서대로 진행해 주세요.</span>
 
         <div class="edge-steps">
-
           <div class="edge-step">
             <span class="edge-step-label">STEP 1</span>
             <p>다운로드 알림에서 오른쪽 <b>… (더보기)</b> 버튼을 클릭합니다.</p>
@@ -255,7 +253,6 @@
             <p>확인 창이 나타나면 <b style="color:#c62828; background:#ffebee; padding:1px 5px; border-radius:3px;">[삭제 ▼] 버튼 오른쪽 화살표</b>를 눌러 <b>[그래도 계속]</b>을 클릭하여 다운로드를 완료합니다.</p>
             <img src="./warning_Edge_03.png" alt="Edge 경고 3단계" class="warning-img">
           </div>
-
         </div>
       </div>
     </div>
@@ -286,49 +283,40 @@
     </div>
 
     <footer class="highlight-footer">
-      <div class="footer-text">
-        © 도서출판 역리원
-      </div>
+      <div class="footer-text">© 도서출판 역리원</div>
     </footer>
   </div>
 
   <script>
     const GITHUB_OWNER = 'jusimaec';
     const GITHUB_REPO = 'remote';
-    const REMOTE_FOLDER_PATH = ''; // 루트 디렉토리
 
     async function init() {
       try {
+        // 가장 최신 Release 1개만 가져옴
+        const res = await fetch(
+          `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`
+        );
+
+        if (!res.ok) throw new Error(`GitHub API 오류: ${res.status}`);
+
+        const release = await res.json();
+        const assets = release.assets || [];
+
         let pcFile = null;
         let mobileFile = null;
 
-        const rootResponse = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${REMOTE_FOLDER_PATH}`);
-        const rootContents = await rootResponse.json();
+        for (const asset of assets) {
+          const name = asset.name.toLowerCase();
 
-        for (const item of rootContents) {
-          if (item.type === 'file') {
-            const fileName = item.name.toLowerCase();
-            if (!pcFile && /support/i.test(item.name) && fileName.endsWith('.exe')) {
-              pcFile = { name: item.name, downloadUrl: item.download_url };
-            }
-            if (!mobileFile && fileName.endsWith('.apk')) {
-              mobileFile = { name: item.name, downloadUrl: item.download_url };
-            }
-          } else if (item.type === 'dir') {
-            const folderResponse = await fetch(item.url);
-            const folderContents = await folderResponse.json();
+          // exe: 이름에 'support' 포함 (기존 로직 유지)
+          if (!pcFile && /support/i.test(asset.name) && name.endsWith('.exe')) {
+            pcFile = { name: asset.name, downloadUrl: asset.browser_download_url };
+          }
 
-            for (const file of folderContents) {
-              if (file.type === 'file') {
-                const fileName = file.name.toLowerCase();
-                if (!pcFile && /support/i.test(file.name) && fileName.endsWith('.exe')) {
-                  pcFile = { name: file.name, downloadUrl: file.download_url };
-                }
-                if (!mobileFile && fileName.endsWith('.apk')) {
-                  mobileFile = { name: file.name, downloadUrl: file.download_url };
-                }
-              }
-            }
+          // apk: 확장자 .apk
+          if (!mobileFile && name.endsWith('.apk')) {
+            mobileFile = { name: asset.name, downloadUrl: asset.browser_download_url };
           }
         }
 
@@ -352,16 +340,19 @@
           p.style.color = '#888';
           area.appendChild(p);
         }
+
       } catch (e) {
         console.error(e);
-        document.getElementById('action-area').innerHTML = '<p style="color:#888;">파일을 불러올 수 없습니다.</p>';
+        document.getElementById('action-area').innerHTML =
+          '<p style="color:#888;">파일을 불러올 수 없습니다.</p>';
       }
     }
 
     function addButton(container, label, file, cls) {
       const div = document.createElement('div');
+
       const btn = document.createElement('button');
-      btn.className = `btn-download ${cls === 'btn-mobile' ? 'btn-mobile' : ''}`;
+      btn.className = `btn-download${cls === 'btn-mobile' ? ' btn-mobile' : ''}`;
       btn.innerText = label;
       btn.onclick = () => downloadFile(file, btn, label);
 
@@ -375,7 +366,7 @@
     }
 
     async function downloadFile(file, btn, label) {
-      btn.innerText = "다운로드 중...";
+      btn.innerText = '다운로드 중...';
       btn.disabled = true;
 
       try {
@@ -398,10 +389,10 @@
           window.URL.revokeObjectURL(url);
         }, 100);
 
-        btn.innerText = "다운로드 완료";
+        btn.innerText = '다운로드 완료 ✓';
       } catch (e) {
         console.error(e);
-        btn.innerText = "다운로드 실패";
+        btn.innerText = '다운로드 실패';
       } finally {
         setTimeout(() => {
           btn.innerText = label;
