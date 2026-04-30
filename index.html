@@ -348,22 +348,25 @@
       }
     }
 
-    function addButton(container, label, file, cls) {
-      const div = document.createElement('div');
+function addButton(container, label, file, cls) {
+  const div = document.createElement('div');
 
-      const btn = document.createElement('button');
-      btn.className = `btn-download${cls === 'btn-mobile' ? ' btn-mobile' : ''}`;
-      btn.innerText = label;
-      btn.onclick = () => downloadFile(file, btn, label);
+  const btn = document.createElement('button');
+  btn.className = `btn-download${cls === 'btn-mobile' ? ' btn-mobile' : ''}`;
+  btn.innerText = label;
+  btn.onclick = () => {
+    // fetch() 대신 직접 이동 → CORS 우회, 브라우저가 자동으로 다운로드 처리
+    window.location.href = file.downloadUrl;
+  };
 
-      const name = document.createElement('div');
-      name.className = 'file-name';
-      name.innerText = file.name;
+  const name = document.createElement('div');
+  name.className = 'file-name';
+  name.innerText = file.name;
 
-      div.appendChild(btn);
-      div.appendChild(name);
-      container.appendChild(div);
-    }
+  div.appendChild(btn);
+  div.appendChild(name);
+  container.appendChild(div);
+}
 
     async function downloadFile(file, btn, label) {
       btn.innerText = '다운로드 중...';
